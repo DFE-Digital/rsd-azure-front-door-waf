@@ -18,13 +18,8 @@ variable "tags" {
   type        = map(string)
 }
 
-variable "cdn_sku" {
-  description = "Azure CDN Front Door SKU"
-  type        = string
-}
-
-variable "cdn_response_timeout" {
-  description = "Azure CDN Front Door response timeout in seconds"
+variable "response_request_timeout" {
+  description = "Azure CDN Front Door response timeout, or app gateway v2 request timeout in seconds"
   type        = number
 }
 
@@ -39,47 +34,13 @@ variable "waf_mode" {
   type        = string
 }
 
-
-variable "waf_enable_rate_limiting" {
-  description = "Deploy a Rate Limiting Policy on the Front Door WAF"
-  type        = bool
-}
-
-variable "waf_rate_limiting_duration_in_minutes" {
-  description = "Number of minutes to BLOCK requests that hit the Rate Limit threshold"
-  type        = number
-}
-
-variable "waf_rate_limiting_threshold" {
-  description = "Maximum number of concurrent requests before Rate Limiting policy is applied"
-  type        = number
-}
-
-variable "waf_rate_limiting_bypass_ip_list" {
-  description = "List if IP CIDRs to bypass the Rate Limit Policy"
-  type        = list(string)
-}
-
-variable "waf_managed_rulesets" {
-  description = "Map of all Managed rules you want to apply to the WAF, including any overrides"
-  type = map(object({
-    version : string,
-    action : string,
-    exclusions : optional(map(object({
-      match_variable : string,
-      operator : string,
-      selector : string
-    })), {})
-    overrides : optional(map(map(object({
-      action : string,
-      exclusions : optional(map(object({
-        match_variable : string,
-        operator : string,
-        selector : string
-      })), {})
-    }))), {})
-  }))
-  default = {}
+variable "waf_application" {
+  description = "Which product to apply the WAF to. Must be either CDN or AppGatewayV2"
+  type        = string
+  validation {
+    condition     = contains(["CDN", "AppGatewayV2"], var.waf_application)
+    error_message = "waf_application must be either CDN or AppGatewayV2"
+  }
 }
 
 variable "waf_custom_rules" {
@@ -97,7 +58,7 @@ variable "waf_custom_rules" {
   default = {}
 }
 
-variable "cdn_container_app_targets" {
+variable "container_app_targets" {
   description = "A map of Container Apps to configure as CDN targets"
   type = map(object({
     resource_group : string,
@@ -110,7 +71,7 @@ variable "cdn_container_app_targets" {
   default = {}
 }
 
-variable "cdn_web_app_service_targets" {
+variable "web_app_service_targets" {
   description = "A map of Web App Services to configure as CDN targets"
   type = map(object({
     resource_group : string,
