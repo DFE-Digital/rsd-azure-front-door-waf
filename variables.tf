@@ -33,6 +33,22 @@ variable "tfvars_filename" {
   type        = string
 }
 
+variable "key_vault_app_gateway_certificates_access_users" {
+  description = "List of users that require access to the App Gateway Certificates Key Vault. This should be a list of User Principle Names (Found in Active Directory) that need to run terraform"
+  type        = list(string)
+}
+
+variable "key_vault_app_gateway_certificates_access_ipv4" {
+  description = "List of IPv4 Addresses that are permitted to access the App Gateway Certificates Key Vault"
+  type        = list(string)
+}
+
+variable "key_vault_app_gateway_certificates_access_subnet_ids" {
+  description = "List of Azure Subnet IDs that are permitted to access the App Gateway Certificates Key Vault"
+  type        = list(string)
+  default     = []
+}
+
 variable "key_vault_tfvars_enable_log_analytics_workspace" {
   description = "When enabled, creates a Log Analyics Workspace for the tfvars Key Vault"
   type        = bool
@@ -45,86 +61,29 @@ variable "key_vault_tfvars_enable_diagnostic_storage_account" {
   default     = true
 }
 
-variable "cdn_sku" {
-  description = "Azure CDN Front Door SKU"
-  type        = string
-}
-
-variable "cdn_response_timeout" {
-  description = "Azure CDN Front Door response timeout in seconds"
+variable "response_request_timeout" {
+  description = "Azure CDN Front Door response or App Gateway V2 request timeout in seconds"
   type        = number
 }
 
 variable "enable_waf" {
-  description = "Enable CDN Front Door WAF"
+  description = "Enable WAF"
   type        = bool
   default     = false
 }
 
-variable "waf_mode" {
-  description = "CDN Front Door WAF mode"
+variable "waf_application" {
+  description = "Which product to apply the WAF to. Must be either CDN or AppGatewayV2"
   type        = string
 }
 
-variable "waf_enable_rate_limiting" {
-  description = "Deploy a Rate Limiting Policy on the Front Door WAF"
-  type        = bool
+variable "waf_mode" {
+  description = "WAF mode"
+  type        = string
 }
 
-variable "waf_rate_limiting_duration_in_minutes" {
-  description = "Number of minutes to BLOCK requests that hit the Rate Limit threshold"
-  type        = number
-}
-
-variable "waf_rate_limiting_threshold" {
-  description = "Maximum number of concurrent requests before Rate Limiting policy is applied"
-  type        = number
-}
-
-variable "waf_rate_limiting_bypass_ip_list" {
-  description = "List if IP CIDRs to bypass the Rate Limit Policy"
-  type        = list(string)
-}
-
-variable "waf_managed_rulesets" {
-  description = "Map of all Managed rules you want to apply to the WAF, including any overrides"
-  type = map(object({
-    version : string,
-    action : string,
-    exclusions : optional(map(object({
-      match_variable : string,
-      operator : string,
-      selector : string
-    })), {})
-    overrides : optional(map(map(object({
-      action : string,
-      exclusions : optional(map(object({
-        match_variable : string,
-        operator : string,
-        selector : string
-      })), {})
-    }))), {})
-  }))
-  default = {}
-}
-
-variable "waf_custom_rules" {
-  description = "Map of all Custom rules you want to apply to the WAF"
-  type = map(object({
-    priority : number,
-    action : string,
-    match_conditions : map(object({
-      match_variable : string,
-      match_values : list(string),
-      operator : string,
-      selector : optional(string, null)
-    }))
-  }))
-  default = {}
-}
-
-variable "cdn_container_app_targets" {
-  description = "A map of Container Apps to configure as CDN targets"
+variable "container_app_targets" {
+  description = "A map of Container Apps to configure as Front Door or App Gateway V2 targets"
   type = map(object({
     resource_group : string,
     create_custom_domain : optional(bool, false),
@@ -148,8 +107,8 @@ variable "cdn_container_app_targets" {
   default = {}
 }
 
-variable "cdn_web_app_service_targets" {
-  description = "A map of Web App Services to configure as CDN targets"
+variable "web_app_service_targets" {
+  description = "A map of Web App Services to configure as Front Door or App Gateway V2 targets"
   type = map(object({
     resource_group : string,
     os : string
